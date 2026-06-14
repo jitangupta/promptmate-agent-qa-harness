@@ -8,14 +8,20 @@ When a user asks to run tests, follow this file unless they give a narrower scop
 
 ## Product Under Test
 
-PromptMate is a Chrome extension that lets users save, organize, sync, and inject prompts into AI chat interfaces.
+PromptMate is a Chrome extension that helps users compose, organize, personalize, sync, and inject reusable prompts into AI chat interfaces.
 
 The extension renders a floating PromptMate button and panel inside supported AI chat products. The panel includes:
 
 - searchable prompt library
+- prompt grouping with group headers and group-specific actions
+- group-specific instructions that can be applied during prompt insertion
+- variable placeholders using `{{double_brace}}` syntax, with a fill-in dialog and live preview before insertion
+- user context that can be attached to inserted prompts
+- context extraction from the current chat
 - Tone and Format settings
-- prompt actions: Use, Pin, Copy, Edit, History, Delete
+- prompt actions: Use, Pin, Copy, Preview, Edit, History, Move to group, Delete
 - cloud sync
+- version history
 - trash and restore flows
 
 ## Supported Platforms
@@ -47,6 +53,7 @@ Examples:
 | `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
 | `promptmate_test_report_YYYY-MM-DD.md` | Markdown report for a dated run |
 | `DEVELOPMENT_HANDOFF.md` | Product bugs, enhancements, and UX notes discovered during testing |
+| `RELEASE_HANDOFF_0.8.0.md` | Release-specific handoff for the 0.8.0 live release decision and expanded QA scope |
 
 ## How To Open PromptMate
 
@@ -79,8 +86,17 @@ Useful UI targets:
 3. Navigate to the platform and open PromptMate.
 4. Execute each applicable test case in order.
 5. Append a result immediately after every test.
-6. Add product bugs, enhancements, and usability ideas to `DEVELOPMENT_HANDOFF.md`.
-7. Generate or update the markdown report after the run.
+6. Watch for usability friction while testing, even when the functional expectation passes.
+7. Add product bugs, enhancements, and usability ideas to `DEVELOPMENT_HANDOFF.md`.
+8. Generate or update the markdown report after the run.
+
+## Usability Review Rule
+
+During every test run, evaluate whether a real user would understand and complete the workflow smoothly, not only whether the expected UI state appears.
+
+Flag friction when any step feels confusing, hidden, slow, fragile, repetitive, easy to mis-click, unclear in copy, hard to recover from, or surprising in sequence. A test can still be logged as `pass` for functional behavior while also producing a UX handoff item.
+
+Capture usability notes in result `notes` when they are test-specific. Add a `UX` entry to `DEVELOPMENT_HANDOFF.md` when the friction suggests a product improvement, especially for variables, grouping, group instructions, user context, context extraction, history, restore, or destructive actions.
 
 ## Result Logging
 
@@ -211,3 +227,7 @@ Patterns, risks, and follow-up testing suggestions.
 | Account | TC-055 to TC-056 |
 | Help & Feedback | TC-057 to TC-059 |
 | Edge Cases | TC-060 to TC-064 |
+| Variables | TC-065 to TC-070 |
+| Groups | TC-071 to TC-078 |
+| User Context | TC-079 to TC-084 |
+| Prompt Preview | TC-085 to TC-086 |

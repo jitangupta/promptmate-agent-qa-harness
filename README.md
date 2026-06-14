@@ -19,7 +19,9 @@ This harness treats an AI agent as a supervised QA operator:
 
 ## Target Product
 
-PromptMate is a Chrome extension that lets users save, organize, sync, and inject prompts into AI chat interfaces.
+PromptMate is a Chrome extension that helps users compose, organize, personalize, sync, and inject reusable prompts into AI chat interfaces.
+
+Current feature areas covered by the harness include prompt search, tone and format modifiers, grouped prompt libraries, group-specific instructions, variable placeholders, user context, context extraction, preview, version history, trash/restore flows, cloud sync, and platform-specific injection behavior.
 
 Supported PromptMate surfaces:
 
@@ -40,6 +42,7 @@ Supported PromptMate surfaces:
 | `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
 | `promptmate_test_report_YYYY-MM-DD.md` | Human-readable report for a dated run |
 | `DEVELOPMENT_HANDOFF.md` | Bugs, usability issues, and enhancement ideas found during testing |
+| `RELEASE_HANDOFF_0.8.0.md` | Release-specific handoff for the 0.8.0 live release decision and expanded QA scope |
 
 ## Test Case Format
 
