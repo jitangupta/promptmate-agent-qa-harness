@@ -1,153 +1,95 @@
-# PromptMate Test Suite
+# PromptMate Agent QA Harness
 
-Automated test suite for the **PromptMate** Chrome extension (v0.7.1).  
-Powered by Claude + Claude-in-Chrome MCP. No Playwright, no Puppeteer.
+A lightweight, agent-operated QA harness for testing the PromptMate Chrome extension in real browser sessions.
 
----
+This repository is not the PromptMate extension source code. It is a public, reusable example of an Agent QA Harness: structured instructions, JSONL test cases, result logs, reports, and development handoff notes that AI agents can use to perform browser-based product QA.
 
-## Supported Platforms
+## Why This Exists
 
-Derived from `manifest.json` `content_scripts`:
+PromptMate runs inside several third-party AI chat products. Those products change often, use different input implementations, and may depend on logged-in browser state. Traditional brittle selectors are not always enough.
 
-| Platform | URL | Content Script |
+This harness treats an AI agent as a supervised QA operator:
+
+- read a structured test spec
+- use Chrome with the installed PromptMate extension
+- interact with the UI like a user
+- log every result immediately
+- generate a readable report
+- separate product bugs and UX opportunities into a development handoff file
+
+## Target Product
+
+PromptMate is a Chrome extension that lets users save, organize, sync, and inject prompts into AI chat interfaces.
+
+Supported PromptMate surfaces:
+
+| Platform | URL | Notes |
 |---|---|---|
-| Claude | `claude.ai` | `claude-content.bundle.js` |
-| ChatGPT | `chatgpt.com` | `gpt-content.bundle.js` |
-| DeepSeek | `chat.deepseek.com` | `deepseek-content.bundle.js` |
-| Kimi | `kimi.com` / `www.kimi.com` | `kimi-content.bundle.js` (document_idle) |
+| Claude | `https://claude.ai/new` | Uses the Claude content script |
+| ChatGPT | `https://chatgpt.com` | Input is usually `contenteditable` |
+| DeepSeek | `https://chat.deepseek.com` | May require login |
+| Kimi | `https://kimi.com` | Wait 3 seconds after navigation |
 
----
+## Repository Structure
 
-## Folder Structure
-
-```
-PromptMateTestSuite/
-├── README.md                          ← this file
-├── manifest.json                      ← extension manifest (reference)
-├── promptmate_test_cases.jsonl        ← master test spec (64 test cases)
-├── promptmate_test_results_YYYY-MM-DD.jsonl   ← raw results per run
-└── promptmate_test_report_YYYY-MM-DD.md       ← markdown report per run
-```
-
----
-
-## How to Run Tests
-
-Open a Claude (Cowork) session, point it to this folder, and say:
-
-> **"Start the test"**
-
-Claude will:
-1. Read `promptmate_test_cases.jsonl`
-2. Navigate to each of the 4 platforms in Chrome
-3. Execute each applicable test case
-4. Write raw results to `promptmate_test_results_YYYY-MM-DD.jsonl`
-5. Generate a full markdown report `promptmate_test_report_YYYY-MM-DD.md`
-
-Results from previous runs are preserved — each run creates new dated files.
-
----
-
-## Test Result Statuses
-
-| Status | Meaning |
+| File | Purpose |
 |---|---|
-| `pass` | Test executed and expected outcome confirmed |
-| `fail` | Test executed but outcome did not match expected |
-| `unable_to_test` | Could not execute — reason logged in `notes` |
-| `skip` | Intentionally skipped for this run (e.g. destructive tests) |
+| `AGENTS.md` | Shared runbook for Codex, Claude Code, and other agentic systems |
+| `CLAUDE.md` | Claude Code entry point that delegates to `AGENTS.md` |
+| `promptmate_test_cases.jsonl` | Master test specification, one JSON object per line |
+| `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
+| `promptmate_test_report_YYYY-MM-DD.md` | Human-readable report for a dated run |
+| `DEVELOPMENT_HANDOFF.md` | Bugs, usability issues, and enhancement ideas found during testing |
 
----
-
-## Test Case Format (JSONL)
+## Test Case Format
 
 Each line in `promptmate_test_cases.jsonl` is a JSON object:
 
 ```json
 {
   "id": "TC-001",
-  "category": "Extension Visibility",
-  "name": "Panel toggle open",
-  "description": "...",
-  "preconditions": ["..."],
-  "steps": ["..."],
-  "expected": "...",
-  "platforms": ["claude.ai", "chatgpt.com", "chat.deepseek.com", "kimi.com"]
+  "category": "Extension Presence",
+  "name": "Button visible on chatgpt.com",
+  "description": "PromptMate button appears on chatgpt.com after page load",
+  "preconditions": ["Extension installed", "Logged into PromptMate"],
+  "steps": ["Navigate to https://chatgpt.com", "Look for PromptMate button"],
+  "expected": "PromptMate button is visible at bottom-right corner",
+  "platforms": ["chatgpt.com"]
 }
 ```
 
----
+## Result Format
 
-## Test Result Format (JSONL)
-
-Each line in `promptmate_test_results_YYYY-MM-DD.jsonl`:
+Each result is appended immediately as JSONL:
 
 ```json
 {
   "id": "TR-001",
   "test_id": "TC-001",
-  "platform": "claude.ai",
+  "platform": "chatgpt.com",
   "status": "pass",
-  "timestamp": "2026-06-07",
-  "notes": "Button visible at bottom-right, panel opened correctly."
+  "timestamp": "2026-06-14",
+  "notes": "PromptMate button was visible and opened the panel."
 }
 ```
 
----
+Valid statuses: `pass`, `fail`, `unable_to_test`, `skip`.
 
-## Categories
+## How To Use
 
-Authentication (Google Sign-In) is **tested manually by the user** and is not included in this suite.
+For agentic systems, start with `AGENTS.md`.
 
-| # | Category | Test IDs |
-|---|---|---|
-| 1 | Extension Presence | TC-001 – TC-005 |
-| 2 | Panel UI | TC-006 – TC-008 |
-| 3 | Search | TC-009 – TC-013 |
-| 4 | Tone & Format | TC-014 – TC-018 |
-| 5 | Prompt Library | TC-019 – TC-022 |
-| 6 | Prompt Injection | TC-023 – TC-027 |
-| 7 | Pin / Unpin | TC-028 – TC-030 |
-| 8 | Prompt CRUD | TC-031 – TC-041 |
-| 9 | Version History | TC-042 – TC-046 |
-| 10 | Trash | TC-047 – TC-051 |
-| 11 | Cloud Sync | TC-052 – TC-054 |
-| 12 | Account | TC-055 – TC-056 |
-| 13 | Help & Feedback | TC-057 – TC-059 |
-| 14 | Edge Cases | TC-060 – TC-064 |
+Common prompts:
 
----
-
-## Notes for Claude (Test Runner Instructions)
-
-- Run tests **platform by platform** — navigate to each URL, open PromptMate, run all applicable tests, then move to the next platform.
-- For Kimi, wait for `document_idle` — the content script loads after the page fully renders, so wait 2–3s after navigation before interacting.
-- **Do not** execute destructive tests (TC-042 Delete forever, TC-049 Sign out) without explicit user confirmation.
-- Tests that require creating prompts (TC-030, TC-055–TC-058) should use the prefix `AutoTest-` in the title so they are easy to clean up after.
-- After all platforms are tested, generate the markdown report using the template in this README.
-
----
-
-## Markdown Report Template
-
-The generated report (`promptmate_test_report_YYYY-MM-DD.md`) uses this format:
-
+```text
+Start the ChatGPT test.
+Start the full test.
+Run TC-031 through TC-041 on chatgpt.com.
+Review the latest report and summarize failures.
 ```
-# PromptMate Test Report — YYYY-MM-DD
 
-## Summary
-| Platform | Pass | Fail | Unable | Total |
-| claude.ai | X | X | X | 60 |
-| chatgpt.com | X | X | X | 60 |
-| chat.deepseek.com | X | X | X | 60 |
-| kimi.com | X | X | X | 60 |
+During testing, discovered product issues should go into `DEVELOPMENT_HANDOFF.md`, not only into the dated test report. The handoff file is meant to be directly usable by Codex, Claude Code, or a human developer.
 
-## Results Matrix
-| ID | Test Name | claude.ai | chatgpt.com | chat.deepseek.com | kimi.com |
-|---|---|---|---|---|---|
-| TC-001 | Panel toggle open | ✅ | ✅ | ✅ | ✅ |
-...
+## Positioning
 
-## Failures & Issues
-(detail any failures or unexpected behaviors)
-```
+This repository is also a public case study for the Agent QA Harness pattern: using AI agents as browser-based QA operators with structured specs, evidence-oriented logs, and development-ready handoffs.

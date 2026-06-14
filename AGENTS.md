@@ -1,211 +1,213 @@
-# PromptMate Test Suite — Codex Context
+# PromptMate Agent QA Harness - Agent Runbook
 
-This folder is the test suite for **PromptMate**, a Chrome extension (v0.7.1) that lets users save, organize, and inject prompts into AI chat interfaces.
+This repository is a lightweight QA harness for testing the PromptMate Chrome extension with AI agents such as Codex, Claude Code, and Claude Desktop.
 
-When a user says **"Start the test"**, follow the instructions in this file exactly.
+It is not the PromptMate extension source code. It contains the test specification, execution rules, result logs, reports, and development handoff notes.
 
----
+When a user asks to run tests, follow this file unless they give a narrower scope.
 
-## What PromptMate Is
+## Product Under Test
 
-A Chrome extension injected via content scripts into 4 AI chat platforms. It renders a floating panel (bottom-right corner) with:
-- A searchable prompt library
-- Tone & Format settings (appended to injected prompts)
-- Per-prompt actions: Use, Pin, Copy, Edit, History, Delete
-- Cloud sync across platforms
-- A trash/restore system (30-day soft delete)
+PromptMate is a Chrome extension that lets users save, organize, sync, and inject prompts into AI chat interfaces.
 
-Each platform has its own dedicated content script bundle — injection behavior may differ.
+The extension renders a floating PromptMate button and panel inside supported AI chat products. The panel includes:
 
----
+- searchable prompt library
+- Tone and Format settings
+- prompt actions: Use, Pin, Copy, Edit, History, Delete
+- cloud sync
+- trash and restore flows
 
-## Supported Platforms (from manifest.json)
+## Supported Platforms
 
-| Platform | URL to navigate to | Content script |
+| Platform | URL | Notes |
 |---|---|---|
-| Codex | `https://Codex.ai/new` | `Codex-content.bundle.js` |
-| ChatGPT | `https://chatgpt.com` | `gpt-content.bundle.js` |
-| DeepSeek | `https://chat.deepseek.com` | `deepseek-content.bundle.js` |
-| Kimi | `https://kimi.com` | `kimi-content.bundle.js` (loads at document_idle — wait 3s after navigation) |
+| Claude | `https://claude.ai/new` | Use the real Chrome session with the extension installed |
+| ChatGPT | `https://chatgpt.com` | Input is usually a `contenteditable` element |
+| DeepSeek | `https://chat.deepseek.com` | May require login |
+| Kimi | `https://kimi.com` | Wait 3 seconds after navigation; try `www.kimi.com` only if needed |
 
----
+## Important Scope Rule
 
-## Files in This Folder
+If the user specifies a platform, run only that platform.
+
+Examples:
+
+- "Start the ChatGPT test" means run applicable tests on `chatgpt.com` only.
+- "Start the full test" means run all supported platforms.
+- "Start the test" without a platform means ask one concise clarification unless prior conversation clearly established the platform.
+
+## Files
 
 | File | Purpose |
 |---|---|
-| `AGENTS.md` | This file — read first, every session |
-| `manifest.json` | Extension manifest — reference for supported URLs |
-| `promptmate_test_cases.jsonl` | Master test spec — 64 test cases, one JSON per line |
-| `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw results written after each run |
-| `promptmate_test_report_YYYY-MM-DD.md` | Markdown report generated after each run |
+| `AGENTS.md` | Shared instructions for all AI agents |
+| `CLAUDE.md` | Claude Code pointer to this runbook |
+| `promptmate_test_cases.jsonl` | Master test cases, one JSON object per line |
+| `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
+| `promptmate_test_report_YYYY-MM-DD.md` | Markdown report for a dated run |
+| `DEVELOPMENT_HANDOFF.md` | Product bugs, enhancements, and UX notes discovered during testing |
 
----
+## How To Open PromptMate
 
-## How to Open PromptMate on Any Platform
+1. Use Chrome with the installed PromptMate extension.
+2. Navigate to the target platform URL.
+3. Wait for the page to load. For Kimi, wait 3 extra seconds.
+4. Locate the PromptMate button by accessible text, DOM text, or visual search. Prefer stable UI evidence over fixed coordinates.
+5. Click the button to open the panel.
+6. Use visible labels and DOM state for interactions. Avoid hard-coded pixel coordinates except as a last resort.
 
-1. Navigate to the platform URL above
-2. Wait for the page to fully load (extra 3s for Kimi)
-3. Use `find` tool with query `"PromptMate button"` to locate the button — do NOT rely on pixel coordinates as window size varies
-4. Click it to open the panel
-5. Use `find` tool throughout for all panel interactions (search bar, dropdowns, buttons) rather than fixed coordinates
+Useful UI targets:
 
----
+| Element | Search text or cue |
+|---|---|
+| Open panel button | `PromptMate`, `Open PromptMate`, `PromptMate button` |
+| Close panel | `Close`, `X`, `close PromptMate` |
+| Search bar | `Search prompts` |
+| Tone dropdown | `TONE`, `Tone` |
+| Format dropdown | `FORMAT`, `Format` |
+| New prompt button | `New prompt`, `+ New prompt` |
+| Global menu | `...`, `more options`, `ellipsis menu` |
+| Prompt card menu | prompt-specific options menu |
+| Save button | `Save` |
+| Cancel button | `Cancel` |
 
-## How to Run the Tests
+## Test Execution Flow
 
-### Step 1 — Read the spec
-Read `promptmate_test_cases.jsonl`. Each line is one test case with fields: `id`, `category`, `name`, `description`, `preconditions`, `steps`, `expected`, `platforms`.
+1. Read `promptmate_test_cases.jsonl`.
+2. Filter test cases by the requested platform.
+3. Navigate to the platform and open PromptMate.
+4. Execute each applicable test case in order.
+5. Append a result immediately after every test.
+6. Add product bugs, enhancements, and usability ideas to `DEVELOPMENT_HANDOFF.md`.
+7. Generate or update the markdown report after the run.
 
-### Step 2 — Run platform by platform
-For each platform in this order: **Codex.ai → chatgpt.com → chat.deepseek.com → kimi.com**:
-- Navigate to the URL
-- Open PromptMate
-- Execute every test case whose `platforms` array includes this platform
-- Log each result immediately
+## Result Logging
 
-### Step 3 — Write raw results
-Append every result to `promptmate_test_results_YYYY-MM-DD.jsonl` (use today's date).
-Each line:
+Append each result to `promptmate_test_results_YYYY-MM-DD.jsonl` using today's date.
+
+Use sequential result IDs for the run:
+
 ```json
 {
   "id": "TR-001",
   "test_id": "TC-001",
-  "platform": "Codex.ai",
+  "platform": "chatgpt.com",
   "status": "pass",
   "timestamp": "YYYY-MM-DD",
-  "notes": "Observed behaviour and any detail."
+  "notes": "Observed behavior and relevant evidence."
 }
 ```
-Use sequential TR-NNN IDs across all platforms in the run.
 
-### Step 4 — Generate the markdown report
-After all 4 platforms are done, write `promptmate_test_report_YYYY-MM-DD.md` (see format below).
+Statuses:
 
----
-
-## Result Statuses
-
-| Status | When to use |
+| Status | Use when |
 |---|---|
-| `pass` | Expected outcome confirmed by observation |
-| `fail` | Test ran but outcome did NOT match expected |
-| `unable_to_test` | Could not execute — explain why in notes |
-| `skip` | Explicitly skipped (only for truly destructive ops, noted below) |
+| `pass` | Expected outcome was confirmed |
+| `fail` | Test ran but actual behavior differed from expected behavior |
+| `unable_to_test` | Test could not be executed; explain why |
+| `skip` | Test was intentionally skipped; explain why |
 
----
+## Authentication Rule
 
-## Authentication
+Do not sign in, sign out, or complete authentication flows.
 
-Authentication (Google Sign-In) is **tested manually by the user** — do not attempt to sign in, sign out, or handle any auth flow. If a platform shows a login wall, log `unable_to_test` for all cases on that platform with note "not logged in — user handles auth manually".
+If a platform shows a login wall, mark applicable tests as `unable_to_test` with a note such as:
 
----
+```text
+not logged in - user handles auth manually
+```
 
-## Test Categories
-
-| Category | Test IDs | Description |
-|---|---|---|
-| Extension Presence | TC-001 – TC-005 | Button visibility per platform and on unsupported sites |
-| Panel UI | TC-006 – TC-008 | Open/close panel |
-| Search | TC-009 – TC-013 | Search filtering, empty state, case-insensitivity |
-| Tone & Format | TC-014 – TC-018 | Dropdowns, persistence, appended modifier |
-| Prompt Library | TC-019 – TC-022 | RECENT/PINNED sections, ordering |
-| Prompt Injection | TC-023 – TC-027 | Use action per platform, counter increment |
-| Pin / Unpin | TC-028 – TC-030 | Pin/unpin behavior, multiple pins |
-| Prompt CRUD | TC-031 – TC-041 | Create, Edit, Copy, Cancel, validation |
-| Version History | TC-042 – TC-046 | History modal, diff, restore, 10-item cap |
-| Trash | TC-047 – TC-051 | Delete, restore, delete forever, navigation |
-| Cloud Sync | TC-052 – TC-054 | Sync indicator, persistence, cross-platform |
-| Account | TC-055 – TC-056 | Email display, sign-out button presence |
-| Help & Feedback | TC-057 – TC-059 | User Guide, Rate, Request feature |
-| Edge Cases | TC-060 – TC-064 | Long title/body, special chars, duplicates, Escape |
-
----
+For sign-out tests, verify button presence only. Do not click sign out.
 
 ## Data Safety Rules
 
-This is a **test account** — you have full freedom to create, edit, and delete data.
+This is a test account, but keep test data easy to identify and clean up.
 
-- Always prefix created prompts with `AutoTest-` (e.g. `AutoTest-TC032`)
-- Always delete `AutoTest-` prompts after the test that created them
-- The only tests to treat as `skip` by default are:
-  - **TC-050** (Delete forever) — irreversible; only run if you created the item yourself in this session
-  - **TC-056** (Sign out button) — verify presence only, do NOT click it
+- Prefix created prompts with `AutoTest-`.
+- Delete or restore `AutoTest-` prompts after the test that created them when safe.
+- Do not click destructive account/auth actions.
+- Treat irreversible delete-forever flows as `skip` unless the item was created during the same run and the user has approved that scope.
 
----
+Default skip guidance:
 
-## Platform-Specific Notes
+- `TC-050`: Delete forever - skip unless the item was created during the same run and the user approved irreversible deletion.
+- `TC-056`: Sign out button - verify presence only; do not click sign out.
 
-### Codex (Codex.ai)
-- Panel opens reliably; all features confirmed working in prior sessions
-- Chat input selector: the main textarea
+## Development Handoff Rule
 
-### ChatGPT (chatgpt.com)
-- May show a login wall — if not logged in, log `unable_to_test` for all ChatGPT cases with note "not logged in"
-- ChatGPT input is a `contenteditable` div, not a textarea — verify Use injection works
+Whenever testing reveals a bug, usability issue, missing state, unclear copy, flaky behavior, or enhancement idea, add it to `DEVELOPMENT_HANDOFF.md`.
 
-### DeepSeek (chat.deepseek.com)
-- May require login — same rule as ChatGPT
-- Input may be a textarea or contenteditable
+Use this format:
 
-### Kimi (kimi.com)
-- Content script runs at `document_idle` — **always wait 3 seconds** after navigation before looking for the PromptMate button
-- Try both `kimi.com` and `www.kimi.com` if button not found on first try
-- May require login
+```markdown
+## YYYY-MM-DD - Short Title
 
----
+- **Type:** Bug | Enhancement | UX | Testability | Docs
+- **Platform:** chatgpt.com | claude.ai | chat.deepseek.com | kimi.com | all
+- **Related tests:** TC-XXX, TC-YYY
+- **Severity:** P0 | P1 | P2 | P3
+- **Observed:** What happened.
+- **Expected:** What should happen.
+- **Evidence:** Result ID, report section, or short reproduction note.
+- **Suggested fix:** Concrete implementation or product suggestion.
+- **Status:** Open
+```
 
 ## Markdown Report Format
 
+After a run, create or update `promptmate_test_report_YYYY-MM-DD.md`. Include one platform column per platform tested; the example below shows a ChatGPT-only run:
+
 ```markdown
-# PromptMate Test Report — YYYY-MM-DD
+# PromptMate Test Report - YYYY-MM-DD
 
 ## Summary
 
 | Platform | Pass | Fail | Skip | Unable | Total |
 |---|---|---|---|---|---|
-| Codex.ai | N | N | N | N | 64 |
-| chatgpt.com | N | N | N | N | 64 |
-| chat.deepseek.com | N | N | N | N | 64 |
-| kimi.com | N | N | N | N | 64 |
-| **TOTAL** | **N** | **N** | **N** | **N** | **256** |
+| chatgpt.com | N | N | N | N | N |
+| **TOTAL** | **N** | **N** | **N** | **N** | **N** |
 
 ## Results Matrix
 
-| ID | Category | Test Name | Codex.ai | chatgpt.com | deepseek | kimi |
-|---|---|---|---|---|---|---|
-| TC-001 | Extension Visibility | Panel toggle open | ✅ | ✅ | ✅ | ✅ |
-| TC-002 | ... | ... | ... | ... | ... | ... |
+| ID | Category | Test Name | chatgpt.com |
+|---|---|---|---|
+| TC-001 | Extension Presence | Button visible | pass |
 
-Legend: ✅ pass · ❌ fail · ⏭️ skip · ❓ unable_to_test
+Legend: pass | fail | skip | unable_to_test | n/a not applicable
 
 ## Failures & Issues
 
-### [TC-XXX] Test name — platform
+### [TC-XXX] Test name - platform
+
 **Expected:** ...
 **Actual:** ...
 **Notes:** ...
 
+## Development Handoff Additions
+
+List any entries added to `DEVELOPMENT_HANDOFF.md`.
+
 ## Observations & Recommendations
 
-(Any patterns, regressions, or suggestions noted during the run)
+Patterns, risks, and follow-up testing suggestions.
 ```
 
----
+## Current Test Categories
 
-## Quick Reference — Key UI Elements to Find
-
-Use the `find` tool with these queries:
-
-| Element | Query string |
+| Category | Test IDs |
 |---|---|
-| Open panel button | `"PromptMate button"` |
-| Close panel (×) | `"close panel button X"` or `"close PromptMate"` |
-| Search bar | `"Search prompts"` |
-| Tone dropdown | `"TONE dropdown"` |
-| Format dropdown | `"FORMAT dropdown None"` |
-| New prompt button | `"New prompt button"` |
-| Global menu (···) | `"more options menu"` or `"ellipsis menu"` |
-| Prompt card menu (···) | `"prompt options"` on a specific card |
-| Save button in modal | `"Save"` |
-| Cancel button in modal | `"Cancel"` |
+| Extension Presence | TC-001 to TC-005 |
+| Panel UI | TC-006 to TC-008 |
+| Search | TC-009 to TC-013 |
+| Tone & Format | TC-014 to TC-018 |
+| Prompt Library | TC-019 to TC-022 |
+| Prompt Injection | TC-023 to TC-027 |
+| Pin / Unpin | TC-028 to TC-030 |
+| Prompt CRUD | TC-031 to TC-041 |
+| Version History | TC-042 to TC-046 |
+| Trash | TC-047 to TC-051 |
+| Cloud Sync | TC-052 to TC-054 |
+| Account | TC-055 to TC-056 |
+| Help & Feedback | TC-057 to TC-059 |
+| Edge Cases | TC-060 to TC-064 |
