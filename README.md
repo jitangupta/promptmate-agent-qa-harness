@@ -19,7 +19,7 @@ This harness treats an AI agent as a supervised QA operator:
 
 ## Target Product
 
-PromptMate is a Chrome extension that helps users compose, organize, personalize, sync, and inject reusable prompts into AI chat interfaces.
+**[PromptMate](https://github.com/jitangupta/PromptMate)** is a Chrome extension that helps users compose, organize, personalize, sync, and inject reusable prompts into AI chat interfaces.
 
 Current feature areas covered by the harness include prompt search, tone and format modifiers, grouped prompt libraries, group-specific instructions, variable placeholders, user context, context extraction, preview, version history, trash/restore flows, cloud sync, and platform-specific injection behavior.
 
@@ -93,6 +93,8 @@ Review the latest report and summarize failures.
 
 During testing, discovered product issues should go into `DEVELOPMENT_HANDOFF.md`, not only into the dated test report. The handoff file is meant to be directly usable by Codex, Claude Code, or a human developer.
 
-## Positioning
+## Agent QA Harness Pattern
 
-This repository is also a public case study for the Agent QA Harness pattern: using AI agents as browser-based QA operators with structured specs, evidence-oriented logs, and development-ready handoffs.
+This repository is a worked example of the **[Agent QA Harness](https://github.com/jitangupta/agent-qa-harness)** pattern — a generalized, file-based template for using AI agents as browser-based QA operators on any project.
+
+If you want to use this pattern for your own product, start there. It includes an onboarding flow where the agent asks about your project, checks your tooling, and generates an initial test spec — no code required.
