@@ -54,6 +54,25 @@ Examples:
 | `promptmate_test_report_YYYY-MM-DD.md` | Markdown report for a dated run |
 | `DEVELOPMENT_HANDOFF.md` | Product bugs, enhancements, and UX notes discovered during testing |
 | `RELEASE_HANDOFF_0.8.0.md` | Release-specific handoff for the 0.8.0 live release decision and expanded QA scope |
+| `fixtures/` | localStorage state fixtures for tests that require specific extension internal state |
+
+## Fixtures
+
+Some test scenarios depend on internal extension state stored in `localStorage` that cannot be reached purely through UI navigation. The `fixtures/` directory contains JSON files documenting these states and the DevTools console snippet to inject them.
+
+### How to inject a fixture
+
+1. Open Chrome DevTools on the target platform page (e.g. `chatgpt.com`).
+2. Go to the **Console** tab.
+3. Copy the `how_to_inject.snippet` from the fixture file, replacing `VALUE` with the JSON object from the desired `states.*` entry.
+4. Run the snippet. The page will reload.
+5. Proceed with the test steps.
+
+### Available fixtures
+
+| File | Key | Purpose |
+|---|---|---|
+| `fixtures/rating_prompt.json` | `promptmate.ratingPrompt` | Controls visibility of the "A quick favor" Chrome Web Store rating dialog |
 
 ## How To Open PromptMate
 
@@ -231,3 +250,4 @@ Patterns, risks, and follow-up testing suggestions.
 | Groups | TC-071 to TC-078 |
 | User Context | TC-079 to TC-084 |
 | Prompt Preview | TC-085 to TC-086 |
+| Rating Prompt | TC-087 to TC-088 |

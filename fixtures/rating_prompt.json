@@ -1,0 +1,46 @@
+{
+  "_comment": "localStorage fixture for testing the PromptMate rating prompt dialog. Set this on any supported platform page to trigger the 'A quick favor' dialog on next extension load or panel open.",
+  "key": "promptmate.ratingPrompt",
+  "states": {
+    "eligible_unseen": {
+      "_description": "User is eligible to see the rating prompt. firstSeenAt is null so the dialog has never been shown. Extension will show it after usage threshold is met.",
+      "value": {
+        "action": null,
+        "dismissedAt": null,
+        "firstSeenAt": null,
+        "version": "0.7.1"
+      }
+    },
+    "seen_no_action": {
+      "_description": "Dialog was shown at least once (firstSeenAt set) but the user has not rated or dismissed. This is the state to inject to reliably surface the dialog on next panel open.",
+      "value": {
+        "action": null,
+        "dismissedAt": null,
+        "firstSeenAt": "2026-06-11T17:40:26.356Z",
+        "version": "0.7.1"
+      }
+    },
+    "dismissed": {
+      "_description": "User clicked dismiss without rating. Dialog should not reappear immediately.",
+      "value": {
+        "action": "dismissed",
+        "dismissedAt": "2026-06-11T17:45:00.000Z",
+        "firstSeenAt": "2026-06-11T17:40:26.356Z",
+        "version": "0.7.1"
+      }
+    },
+    "rated": {
+      "_description": "User clicked the rate link. Dialog should not reappear.",
+      "value": {
+        "action": "rated",
+        "dismissedAt": null,
+        "firstSeenAt": "2026-06-11T17:40:26.356Z",
+        "version": "0.7.1"
+      }
+    }
+  },
+  "how_to_inject": {
+    "_description": "Run the snippet below in Chrome DevTools console on any supported platform page (claude.ai, chatgpt.com, etc.) with the extension installed. Replace VALUE with the JSON object from one of the states above, then reload the page to trigger the extension to re-read localStorage.",
+    "snippet": "localStorage.setItem('promptmate.ratingPrompt', JSON.stringify(VALUE)); location.reload();"
+  }
+}
