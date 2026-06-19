@@ -1,18 +1,10 @@
 {
-  "_comment": "localStorage fixture for testing the PromptMate rating prompt dialog. Set this on any supported platform page to trigger the 'A quick favor' dialog on next extension load or panel open.",
+  "_comment": "chrome.storage.local fixture for testing the PromptMate rating prompt banner. This data lives in Extension Storage (chrome.storage.local), NOT in the page's localStorage. Do not use localStorage.setItem — it has no effect on extension storage.",
   "key": "promptmate.ratingPrompt",
+  "storage_location": "chrome.storage.local — visible in Chrome DevTools → Application tab → Extension Storage → Local",
   "states": {
-    "eligible_unseen": {
-      "_description": "User is eligible to see the rating prompt. firstSeenAt is null so the dialog has never been shown. Extension will show it after usage threshold is met.",
-      "value": {
-        "action": null,
-        "dismissedAt": null,
-        "firstSeenAt": null,
-        "version": "0.7.1"
-      }
-    },
     "seen_no_action": {
-      "_description": "Dialog was shown at least once (firstSeenAt set) but the user has not rated or dismissed. This is the state to inject to reliably surface the dialog on next panel open.",
+      "_description": "Banner was shown at least once (firstSeenAt set) but user has not rated or dismissed. Inject this to reliably surface the 'A QUICK FAVOR' banner on next panel open.",
       "value": {
         "action": null,
         "dismissedAt": null,
@@ -20,8 +12,17 @@
         "version": "0.7.1"
       }
     },
+    "eligible_unseen": {
+      "_description": "Banner has never been shown. Extension will show it once usage threshold is met. Less predictable for testing — prefer seen_no_action.",
+      "value": {
+        "action": null,
+        "dismissedAt": null,
+        "firstSeenAt": null,
+        "version": "0.7.1"
+      }
+    },
     "dismissed": {
-      "_description": "User clicked dismiss without rating. Dialog should not reappear immediately.",
+      "_description": "User clicked X on the banner. Banner should not reappear immediately.",
       "value": {
         "action": "dismissed",
         "dismissedAt": "2026-06-11T17:45:00.000Z",
@@ -30,7 +31,7 @@
       }
     },
     "rated": {
-      "_description": "User clicked the rate link. Dialog should not reappear.",
+      "_description": "User clicked Rate PromptMate. Banner should not reappear.",
       "value": {
         "action": "rated",
         "dismissedAt": null,
@@ -40,7 +41,29 @@
     }
   },
   "how_to_inject": {
-    "_description": "Run the snippet below in Chrome DevTools console on any supported platform page (claude.ai, chatgpt.com, etc.) with the extension installed. Replace VALUE with the JSON object from one of the states above, then reload the page to trigger the extension to re-read localStorage.",
-    "snippet": "localStorage.setItem('promptmate.ratingPrompt', JSON.stringify(VALUE)); location.reload();"
+    "method_application_tab": {
+      "_description": "Preferred method for agents — pure UI, no console switching required.",
+      "steps": [
+        "Open Chrome DevTools on the supported platform page (F12 or right-click → Inspect)",
+        "Click the 'Application' tab",
+        "In the left sidebar expand 'Extension Storage' then 'Local'",
+        "Find the PromptMate extension entry and click it",
+        "Locate the row with key 'promptmate.ratingPrompt'",
+        "Double-click the value cell and replace it with the desired state JSON from this file",
+        "Press Enter to confirm",
+        "Reload the page (F5)",
+        "Open PromptMate panel — the banner should appear at the top"
+      ]
+    },
+    "method_service_worker_console": {
+      "_description": "Alternative — requires navigating to chrome://extensions first.",
+      "steps": [
+        "Navigate to chrome://extensions",
+        "Find PromptMate and click 'service worker' (or 'background page') to open its DevTools",
+        "In that console run the snippet below replacing VALUE with the desired state JSON",
+        "Navigate back to the platform page and open PromptMate panel"
+      ],
+      "snippet": "chrome.storage.local.set({'promptmate.ratingPrompt': VALUE})"
+    }
   }
 }
