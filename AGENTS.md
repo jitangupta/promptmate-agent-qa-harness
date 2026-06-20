@@ -62,17 +62,88 @@ Some test scenarios depend on internal extension state stored in `localStorage` 
 
 ### How to inject a fixture
 
-1. Open Chrome DevTools on the target platform page (e.g. `chatgpt.com`).
-2. Go to the **Console** tab.
-3. Copy the `how_to_inject.snippet` from the fixture file, replacing `VALUE` with the JSON object from the desired `states.*` entry.
-4. Run the snippet. The page will reload.
-5. Proceed with the test steps.
+**URL param method (preferred — agent-friendly, no DevTools needed):**
+
+Requires the `pm_test_key` / `pm_test_value` hook to be implemented in the PromptMate content script (see `DEVELOPMENT_HANDOFF.md` entry 2026-06-19). Once shipped, navigate to the platform URL with the params and the content script writes the value into `chrome.storage.local` then reloads once.
+
+```
+https://chatgpt.com?pm_test_key=<storageKey>&pm_test_value=<urlEncodedJSON>
+```
+
+The same two params work for any `chrome.storage.local` key — rating prompt, onboarding state, feature flags, or any future storage-backed banner.
+
+**Manual DevTools fallback (works today, not usable by agents):**
+
+1. Open Chrome DevTools on the target platform page (F12).
+2. Go to the **Application** tab.
+3. Expand **Extension Storage → Local**, find the PromptMate entry.
+4. Double-click the value cell for the target key and paste the desired state JSON.
+5. Press Enter, then reload the page.
 
 ### Available fixtures
 
 | File | Key | Purpose |
 |---|---|---|
 | `fixtures/rating_prompt.json` | `promptmate.ratingPrompt` | Controls visibility of the "A quick favor" Chrome Web Store rating dialog |
+
+## Testing State-Dependent UI
+
+Some UI components — banners, onboarding prompts, rating dialogs, feature gates — only appear when specific conditions are met in internal storage. Because `chrome.storage.local` lives in the extension process rather than the page, agents cannot reach it through DOM manipulation or script injection. DevTools can write to it, but agents cannot open DevTools panels.
+
+This creates a class of tests that are structurally blocked without help from the product itself.
+
+### The testability hook pattern
+
+The fix is a **testability seam**: a thin, controlled entry point into internal state that is accessible through a channel agents already have — URL navigation — and stripped from production builds.
+
+PromptMate implements this as two URL parameters read by the content script on load:
+
+| Parameter | Role |
+|---|---|
+| `pm_test_key` | The `chrome.storage.local` key to write |
+| `pm_test_value` | The JSON value to write at that key |
+
+When both params are present, the content script writes the value, removes the params from the URL, and reloads once. The next load behaves exactly as if the user had reached that storage state naturally. The `pm_test_key` / `pm_test_value` pair is generic — it works for any `chrome.storage.local` key, not only `promptmate.ratingPrompt`.
+
+### Why chrome.storage.local is different from localStorage
+
+| | `localStorage` | `chrome.storage.local` |
+|---|---|---|
+| Lives in | Page context | Extension process |
+| Writable by page JS | Yes | No |
+| Writable by DevTools console | Yes (`localStorage.setItem(...)`) | Only via Application tab |
+| Writable by agents | Via script injection | Not directly — blocked |
+
+If a banner uses `localStorage`, an agent can seed it via script injection. If it uses `chrome.storage.local`, the agent is blocked unless the extension exposes a hook. This distinction is easy to miss when first designing the harness.
+
+### The production gating requirement
+
+The URL param hook must never reach production users. A page on any domain could craft a URL with `?pm_test_key=...&pm_test_value=...` and overwrite extension state for any user who clicks it.
+
+PromptMate gates the hook on `process.env.BUILD !== 'production'`, stripped at bundle time by `@rollup/plugin-replace`. The hook is compiled out of production builds entirely — not a runtime conditional. Any testability hook of this kind requires the same treatment.
+
+### Where this pattern applies beyond the rating prompt
+
+The same problem and the same fix apply to any UI element gated on opaque browser storage:
+
+- `localStorage` feature flags or A/B cohort assignments
+- `sessionStorage`-backed onboarding progress
+- `IndexedDB`-backed state (usage thresholds, upgrade prompts)
+- Cookies that gate paywalls or trial expiry banners
+
+### If you are adapting this harness for a different product
+
+Before writing test cases for any state-dependent UI component, ask: *can an agent reach this state through normal navigation?*
+
+If the answer is no:
+
+1. Document the blocked state in your `DEVELOPMENT_HANDOFF.md` equivalent.
+2. Spec a testability hook in the product — pick the agent-accessible channel (URL param, test API endpoint, dev-mode keyboard shortcut).
+3. Gate it from production.
+4. Add a fixture file describing the states and how to inject them.
+5. Update your agent runbook with the injection method **before** writing the test cases.
+
+Discovering the injection gap during a live run wastes a run. Document the gap first, then close it, then write the test cases.
 
 ## How To Open PromptMate
 
@@ -108,6 +179,28 @@ Useful UI targets:
 6. Watch for usability friction while testing, even when the functional expectation passes.
 7. Add product bugs, enhancements, and usability ideas to `DEVELOPMENT_HANDOFF.md`.
 8. Generate or update the markdown report after the run.
+
+## Resuming a Partial Run
+
+If Chrome automation resets mid-run or you need to restart:
+
+1. Check the existing `promptmate_test_results_YYYY-MM-DD.jsonl` to find the last logged result ID.
+2. The user may specify a resume point: **"Resume from TC-XXX"** means skip all test cases with ID ≤ TC-XXX and continue from the next one.
+3. When resuming, do not re-run completed tests. Append new results to the same dated `.jsonl` file using sequential TR-IDs continuing from the last logged result.
+4. If AutoTest fixture prompts or groups from a previous session are missing, re-create them before continuing — do not mark tests as `unable_to_test` solely because fixtures need to be re-established.
+
+## Suite Chunks
+
+For long runs or targeted testing, the suite can be split into themed chunks. Run one or more chunks rather than the full suite when time or session stability is limited.
+
+| Chunk | Test IDs | Focus |
+|---|---|---|
+| `smoke` | TC-001 – TC-020 | Extension presence, panel UI, search, tone/format |
+| `compose` | TC-021 – TC-060 | Prompt library, injection, pin, CRUD, version history, trash, sync, account |
+| `personalize` | TC-061 – TC-078 | Edge cases, variables, groups |
+| `context` | TC-079 – TC-088 | User context, prompt preview, rating prompt |
+
+When the user specifies a chunk name (e.g. "Run the smoke chunk on ChatGPT"), execute only those test IDs.
 
 ## Usability Review Rule
 

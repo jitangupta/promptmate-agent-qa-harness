@@ -93,6 +93,19 @@ Review the latest report and summarize failures.
 
 During testing, discovered product issues should go into `DEVELOPMENT_HANDOFF.md`, not only into the dated test report. The handoff file is meant to be directly usable by Codex, Claude Code, or a human developer.
 
+## Testing State-Dependent UI
+
+When a UI component only appears based on internal storage state (`chrome.storage.local`, `localStorage`, `sessionStorage`, cookies), agents are typically blocked — they can navigate URLs and click elements but cannot open DevTools to seed that state directly.
+
+The fix is a **testability hook** built into the product: a URL parameter pair (`pm_test_key` / `pm_test_value`) that the content script reads on load, writes to `chrome.storage.local`, and then reloads. Any agent that can navigate a URL can seed any storage-backed state without DevTools access.
+
+Key requirements for this pattern to work safely:
+- The hook must be gated from production builds (not a runtime flag — stripped at bundle time)
+- The hook should be generic, covering any storage key, not just the one that triggered the need
+- Fixture files should document each injectable state and how to use the hook
+
+See `AGENTS.md → Testing State-Dependent UI` for the full pattern, including the `chrome.storage.local` vs. `localStorage` distinction, production gating details, and guidance for adapting this to other products.
+
 ## Agent QA Harness Pattern
 
 This repository is a worked example of the **[Agent QA Harness](https://github.com/jitangupta/agent-qa-harness)** pattern — a generalized, file-based template for using AI agents as browser-based QA operators on any project.
