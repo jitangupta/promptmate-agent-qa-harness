@@ -31,6 +31,90 @@ Usability friction should be captured here even when the underlying test passes.
 
 ## Open Items
 
+## 2026-06-21 - Claude Floating Pill Does Not Close the Open Panel
+
+- **Type:** Bug
+- **Platform:** claude.ai
+- **Related tests:** TC-008
+- **Severity:** P2
+- **Observed:** After opening PromptMate on Claude, clicking the active floating pill labelled `Close PromptMate` left the panel open. The panel-header Close button worked.
+- **Expected:** Re-clicking the active floating pill should close the panel.
+- **Evidence:** TR-005 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Verify the active-pill click handler is bound once on Claude and calls the same close path as the panel-header Close button. Add a Claude-specific regression check after content-script reinjection.
+- **Status:** Open
+
+## 2026-06-21 - Pin and Move Updates Appear Several Seconds Late
+
+- **Type:** UX
+- **Platform:** all
+- **Related tests:** TC-021, TC-028, TC-030, TC-078
+- **Severity:** P2
+- **Observed:** Pin/Unpin and Move to group actions changed their menu state before the card visibly relocated. Claude still showed the pinned card inside Group1 after the first short wait, while ChatGPT and Kimi required roughly 3–4 seconds before section/group counts and card placement settled.
+- **Expected:** The card and counts should update immediately or show an explicit pending state until the sync result arrives.
+- **Evidence:** TR-018, TR-022, TR-026, TR-076 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Apply an optimistic local move with rollback on sync failure, or keep a visible per-card syncing state and disable repeat actions until reconciliation completes.
+- **Status:** Open
+
+## 2026-06-21 - Copy Action Leaves Clipboard Empty
+
+- **Type:** Bug
+- **Platform:** chatgpt.com
+- **Related tests:** TC-041
+- **Severity:** P1
+- **Observed:** Copy on the run-created prompt produced an empty browser clipboard. A subsequent paste attempt reported that no clipboard data was available.
+- **Expected:** Copy should place the exact prompt body on the clipboard.
+- **Evidence:** TR-037 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Surface clipboard-write failures, add a visible success/error toast, and regression-test both `navigator.clipboard.writeText` and the fallback copy path in the content-script context.
+- **Status:** Open
+
+## 2026-06-21 - Escape Does Not Dismiss New Prompt Modal
+
+- **Type:** Bug
+- **Platform:** chat.deepseek.com
+- **Related tests:** TC-064
+- **Severity:** P2
+- **Observed:** Pressing Escape while the New prompt dialog contained unsaved title/body text left the dialog open and retained the draft.
+- **Expected:** Escape should close the modal without saving, matching Cancel.
+- **Evidence:** TR-059 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Add a document-level Escape handler while a PromptMate modal is active, stop propagation after handling, and route through the same discard path as Cancel.
+- **Status:** Open
+
+## 2026-06-21 - Native Confirm Dialogs Stall Agent Automation
+
+- **Type:** Testability
+- **Platform:** all
+- **Related tests:** TC-045
+- **Severity:** P2
+- **Observed:** Restore opened a native JavaScript confirm. Accepting it repeatedly stalled Chrome control and reset the automation session; the same behavior appeared while cleaning up an AutoTest group deletion.
+- **Expected:** Destructive or revision-changing confirmations should be operable and verifiable through the extension DOM.
+- **Evidence:** TR-041 in `runs/2026-06-21/test_results.jsonl`; repeated confirmation hang during AutoTest group cleanup.
+- **Suggested fix:** Replace `window.confirm` with an accessible in-panel confirmation dialog that exposes stable buttons and a deterministic pending/success state.
+- **Status:** Open
+
+## 2026-06-21 - Rating Test Hook Reloads Kimi Repeatedly
+
+- **Type:** Testability
+- **Platform:** kimi.com
+- **Related tests:** TC-087, TC-088
+- **Severity:** P1
+- **Observed:** Navigating to Kimi with `pm_test_key` and `pm_test_value` retained both parameters and repeatedly reloaded the page. The PromptMate button alternated between present and absent, so the rating banner could not be opened or dismissed.
+- **Expected:** The hook should write state once, remove both parameters from the URL, reload once, and then leave a stable page with the eligible banner visible.
+- **Evidence:** TR-084 and TR-085 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Remove the test parameters with `history.replaceState` before reloading and add a one-shot session guard. Add coverage for `kimi.com` redirecting to `www.kimi.com`.
+- **Status:** Open
+
+## 2026-06-21 - Missing Safe Fixtures for Empty Library and 10+ Revisions
+
+- **Type:** Testability
+- **Platform:** all
+- **Related tests:** TC-020, TC-046
+- **Severity:** P3
+- **Observed:** TC-020 could not safely reach an empty library without deleting user prompts. TC-046 had no prompt with more than 10 revisions; the richest available prompt had 8.
+- **Expected:** Both state-dependent tests should have agent-safe fixtures that do not mutate unrelated user data.
+- **Evidence:** TR-017 and TR-042 in `runs/2026-06-21/test_results.jsonl`.
+- **Suggested fix:** Add fixture keys for an isolated empty-library dataset and a prompt with at least 11 revisions, injectable through the non-production test hook.
+- **Status:** Open
+
 ## 2026-06-19 - Rating Prompt Tests Blocked by chrome.storage.local Injection Gap
 
 - **Type:** Testability
