@@ -115,6 +115,10 @@ Usability friction should be captured here even when the underlying test passes.
 - **Suggested fix:** Add fixture keys for an isolated empty-library dataset and a prompt with at least 11 revisions, injectable through the non-production test hook.
 - **Status:** Open
 
+## Resolved / Archived Items
+
+Implemented, resolved, or superseded findings are retained here for historical context. Any current regression is tracked as a separate open item above.
+
 ## 2026-06-19 - Rating Prompt Tests Blocked by chrome.storage.local Injection Gap
 
 - **Type:** Testability
@@ -157,7 +161,7 @@ Usability friction should be captured here even when the underlying test passes.
   ```
 
   The function sets the value and reloads once so the extension reads fresh state. On the second load the params are still present but `chrome.storage.local.set` is idempotent so re-running is safe. Must be stripped or no-op'd in production builds.
-- **Status:** Fixed — `pm_test_key`/`pm_test_value` hook implemented in `scripts/sidebar-core.js`, gated on `process.env.BUILD !== 'production'`. `@rollup/plugin-replace` added to `rollup.config.js` to strip the hook from production bundles. AGENTS.md fixture section updated.
+- **Status:** Archived — implemented via the `pm_test_key`/`pm_test_value` hook in `scripts/sidebar-core.js`, gated on `process.env.BUILD !== 'production'`. The Kimi reload regression discovered later is tracked separately in the 2026-06-21 open items.
 
 ## 2026-06-16 - PromptMate Button Hidden While Panel Open
 
@@ -169,7 +173,7 @@ Usability friction should be captured here even when the underlying test passes.
 - **Expected:** If the product supports toggle behavior, the button should remain visible/clickable or the test expectation should be updated to only support the close button.
 - **Evidence:** TR-004 in `promptmate_test_results_2026-06-16.jsonl`.
 - **Suggested fix:** Keep a visible active-state PromptMate pill while the panel is open, or update product copy/tests to make the close-button-only behavior explicit.
-- **Status:** Fixed — `updatePillVisibility()` in `sidebar-core.js` now toggles `pm-active` instead of `pm-hidden`. Pill remains visible and clickable when panel is open. `aria-label` updates to "Close PromptMate" when active. `.pm-pill.pm-active` style added to `pm-v2.css`.
+- **Status:** Archived — fixed by changing `updatePillVisibility()` to use `pm-active` instead of `pm-hidden`. The separate Claude close-handler regression discovered later is tracked in the 2026-06-21 open items.
 
 ## 2026-06-16 - Search Clear Button Missing
 
@@ -181,7 +185,7 @@ Usability friction should be captured here even when the underlying test passes.
 - **Expected:** Users should have a visible one-click affordance to clear search and restore the full library.
 - **Evidence:** TR-008 in `promptmate_test_results_2026-06-16.jsonl`.
 - **Suggested fix:** Add a visible clear button inside the search input when `query.length > 0`, with an accessible label such as `Clear search`.
-- **Status:** Fixed — `buildSearch()` in `sidebar-core.js` now appends a `pm-search-clear` button (×, `aria-label="Clear search"`) that appears when the query is non-empty and hides when cleared. Also hidden on view switch. `.pm-search-clear` styles added to `pm-v2.css`.
+- **Status:** Resolved — `buildSearch()` now provides an accessible clear button, and TC-012 passed on 2026-06-21 (TR-009 in `runs/2026-06-21/test_results.jsonl`).
 
 ## 2026-06-16 - Edit Validation Partially Persists Empty Title Edit
 
@@ -193,7 +197,7 @@ Usability friction should be captured here even when the underlying test passes.
 - **Expected:** Invalid edits should be fully blocked; no title, body, group, history, or sync changes should persist until validation passes.
 - **Evidence:** TR-032 in `promptmate_test_results_2026-06-16.jsonl`.
 - **Suggested fix:** Run validation before any persistence/update side effects, and add a regression test asserting that failed validation leaves the original prompt object unchanged.
-- **Status:** Investigated — current HEAD (`onSavePrompt` in `sidebar-core.js` lines 2682–2687) has correct early-return validation before any writes. No secondary edit path that bypasses validation was found. The observed behavior likely occurred against an intermediate version. Re-test TC-039 against the current build to confirm.
+- **Status:** Resolved — TC-039 and TC-040 passed on 2026-06-21 (TR-035 and TR-036 in `runs/2026-06-21/test_results.jsonl`), confirming invalid edits no longer persisted partial changes.
 
 ## 2026-06-16 - Copy Action Copies Title Instead of Body
 
@@ -205,7 +209,7 @@ Usability friction should be captured here even when the underlying test passes.
 - **Expected:** Copy should copy the prompt body exactly.
 - **Evidence:** TR-034 in `promptmate_test_results_2026-06-16.jsonl`.
 - **Suggested fix:** Check the prompt action handler receives the prompt body field, not the title/display label, and add clipboard unit coverage for prompt cards with distinct title/body.
-- **Status:** Investigated — `onCopy()` and `buildAssembledText()` in `sidebar-core.js` correctly read `prompt.body` (line 1724). The title-on-clipboard behavior was most likely caused by TC-039 state corruption: the partial-edit bug swapped body content before the copy ran. Re-test TC-041 after confirming TC-039 is clean.
+- **Status:** Superseded — the title-copy symptom was not reproduced after validation was fixed. TC-041 still failed on 2026-06-21 with an empty clipboard, which is tracked as a separate open item above.
 
 ## 2026-06-16 - Chrome Automation Stability Limited Back-Half Coverage
 
@@ -217,7 +221,7 @@ Usability friction should be captured here even when the underlying test passes.
 - **Expected:** QA harness should support resuming from a known test ID with stable AutoTest fixtures and minimal manual reconstruction.
 - **Evidence:** Multiple `unable_to_test` results in `promptmate_test_results_2026-06-16.jsonl`.
 - **Suggested fix:** Add a resumable runner checklist or split smoke/regression suites into smaller platform chunks, with fixture setup/cleanup guidance for AutoTest prompts and groups.
-- **Status:** Fixed — AGENTS.md updated with "Resuming a Partial Run" instructions and "Suite Chunks" table (`smoke` TC-001–TC-020, `compose` TC-021–TC-060, `personalize` TC-061–TC-078, `context` TC-079–TC-088).
+- **Status:** Archived — AGENTS.md now includes resume instructions and suite chunks. The narrower native-confirmation automation issue discovered later is tracked separately above.
 
 ## 2026-06-14 - Release Version and QA Scope Handoff
 
