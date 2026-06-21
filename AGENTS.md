@@ -50,8 +50,9 @@ Examples:
 | `AGENTS.md` | Shared instructions for all AI agents |
 | `CLAUDE.md` | Claude Code pointer to this runbook |
 | `promptmate_test_cases.jsonl` | Master test cases, one JSON object per line |
-| `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
-| `promptmate_test_report_YYYY-MM-DD.md` | Markdown report for a dated run |
+| `runs/YYYY-MM-DD/test_results.jsonl` | Raw result log for a dated run |
+| `runs/YYYY-MM-DD/test_report.md` | Markdown report for a dated run |
+| `runs/YYYY-MM-DD/dashboard.html` | Token and cost dashboard (when a Codex rollout log is present) |
 | `DEVELOPMENT_HANDOFF.md` | Product bugs, enhancements, and UX notes discovered during testing |
 | `RELEASE_HANDOFF_0.8.0.md` | Release-specific handoff for the 0.8.0 live release decision and expanded QA scope |
 | `fixtures/` | localStorage state fixtures for tests that require specific extension internal state |
@@ -184,9 +185,9 @@ Useful UI targets:
 
 If Chrome automation resets mid-run or you need to restart:
 
-1. Check the existing `promptmate_test_results_YYYY-MM-DD.jsonl` to find the last logged result ID.
+1. Check the existing `runs/YYYY-MM-DD/test_results.jsonl` to find the last logged result ID.
 2. The user may specify a resume point: **"Resume from TC-XXX"** means skip all test cases with ID ≤ TC-XXX and continue from the next one.
-3. When resuming, do not re-run completed tests. Append new results to the same dated `.jsonl` file using sequential TR-IDs continuing from the last logged result.
+3. When resuming, do not re-run completed tests. Append new results to the same `runs/YYYY-MM-DD/test_results.jsonl` file using sequential TR-IDs continuing from the last logged result.
 4. If AutoTest fixture prompts or groups from a previous session are missing, re-create them before continuing — do not mark tests as `unable_to_test` solely because fixtures need to be re-established.
 
 ## Suite Chunks
@@ -212,7 +213,7 @@ Capture usability notes in result `notes` when they are test-specific. Add a `UX
 
 ## Result Logging
 
-Append each result to `promptmate_test_results_YYYY-MM-DD.jsonl` using today's date.
+Append each result to `runs/YYYY-MM-DD/test_results.jsonl` using today's date. Create the `runs/YYYY-MM-DD/` directory if it does not exist.
 
 Use sequential result IDs for the run:
 
@@ -284,7 +285,7 @@ Use this format:
 
 ## Markdown Report Format
 
-After a run, create or update `promptmate_test_report_YYYY-MM-DD.md`. Include one platform column per platform tested; the example below shows a ChatGPT-only run:
+After a run, create or update `runs/YYYY-MM-DD/test_report.md`. Include one platform column per platform tested; the example below shows a ChatGPT-only run:
 
 ```markdown
 # PromptMate Test Report - YYYY-MM-DD

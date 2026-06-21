@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex Rollout Token Dashboard — 2026-06-21</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3352; --accent: #6366f1; --accent2: #22d3ee;
+    --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+    --text: #e2e8f0; --muted: #94a3b8; --card-radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: #c7d2fe; letter-spacing: -0.02em; }
+  header .meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+    background: #312e81; color: #a5b4fc; border: 1px solid #4338ca;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 32px; }
+  .section-title {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 20px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent-color, var(--accent));
+  }
+  .card .label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .card .value { font-size: 1.8rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .card .sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 24px; }
+  .panel h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .panel h3 span { font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-left: 8px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .key { font-size: 0.82rem; color: var(--muted); }
+  .stat-row .val { font-size: 0.9rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .token-bar-wrap { margin: 16px 0; }
+  .token-bar-wrap .bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+  .token-bar { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; display: flex; }
+  .token-bar .seg { height: 100%; }
+  .cost-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-row .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cost-row .cost-key { font-size: 0.82rem; color: var(--muted); flex: 1; }
+  .cost-row .cost-val { font-size: 0.9rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chart-wrap { position: relative; width: 100%; }
+  .chart-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 24px; margin-bottom: 24px; }
+  .chart-panel h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; }
+  .turn-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .turn-table th { text-align: left; padding: 8px 12px; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .turn-table th:not(:first-child) { text-align: right; }
+  .turn-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .turn-table td:not(:first-child) { text-align: right; }
+  .turn-table tr:last-child td { border-bottom: none; }
+  .turn-table tr:hover td { background: var(--surface2); }
+  .turn-id { font-family: monospace; font-size: 0.72rem; color: var(--muted); }
+  .total-row td { font-weight: 700; color: var(--accent2); background: var(--surface2) !important; }
+  .eff-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+  .eff-high { background: #14532d; color: #86efac; }
+  .eff-med  { background: #78350f; color: #fcd34d; }
+  footer { text-align: center; padding: 32px; color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--border); margin-top: 40px; }
+  footer a { color: var(--accent2); text-decoration: none; }
+  .note { font-size: 0.75rem; color: var(--muted); margin-top: 12px; line-height: 1.5; padding: 10px 14px; background: var(--surface2); border-radius: 8px; border-left: 3px solid var(--amber); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Codex Rollout &mdash; Token &amp; Cost Dashboard</h1>
+    <div class="meta">PromptMate QA Harness &nbsp;|&nbsp; 2026-06-21 &nbsp;|&nbsp; <span class="badge">GPT-5.5</span></div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:1.1rem;color:var(--accent2);font-weight:700">351 API Requests</div>
+    <div style="font-size:0.78rem;color:var(--muted)">2 sessions · 18 turns</div>
+  </div>
+</header>
+<div class="container">
+
+  <div class="section-title" style="margin-bottom:20px">Combined Summary</div>
+  <div class="cards">
+    <div class="card" style="--accent-color:#6366f1">
+      <div class="label">Total API Requests</div>
+      <div class="value">351</div>
+      <div class="sub">339 main + 12 guardian</div>
+    </div>
+    <div class="card" style="--accent-color:#22d3ee">
+      <div class="label">Total Turns</div>
+      <div class="value">18</div>
+      <div class="sub">6 main + 12 guardian</div>
+    </div>
+    <div class="card" style="--accent-color:#a78bfa">
+      <div class="label">Total Input Tokens</div>
+      <div class="value">55.85M</div>
+      <div class="sub">54.84M cached (98%)</div>
+    </div>
+    <div class="card" style="--accent-color:#34d399">
+      <div class="label">Total Output Tokens</div>
+      <div class="value">95.8K</div>
+      <div class="sub">incl. 28.9K reasoning</div>
+    </div>
+    <div class="card" style="--accent-color:#f59e0b">
+      <div class="label">Estimated Cost</div>
+      <div class="value">$35.34</div>
+      <div class="sub">API equivalent (GPT-5.5)</div>
+    </div>
+    <div class="card" style="--accent-color:#22c55e">
+      <div class="label">Cache Savings</div>
+      <div class="value">$246.79</div>
+      <div class="sub">vs. full input rate on cached tokens</div>
+    </div>
+  </div>
+
+  <div class="section-title">Session Breakdown</div>
+  <div class="two-col" style="margin-bottom:40px">
+    <div class="panel">
+      <h3>Main Session <span>Codex Desktop / VSCode</span></h3>
+      <div class="stat-row"><span class="key">Session ID</span><span class="val" style="font-family:monospace;font-size:0.72rem">019ee93f-adf2-7fa2-b540-…</span></div>
+      <div class="stat-row"><span class="key">Duration</span><span class="val">2h 32m 30s</span></div>
+      <div class="stat-row"><span class="key">Turns</span><span class="val">6</span></div>
+      <div class="stat-row"><span class="key">API Requests</span><span class="val">339</span></div>
+      <div class="stat-row"><span class="key">Total Input Tokens</span><span class="val">55,244,524</span></div>
+      <div class="stat-row"><span class="key">&#8627; Cached</span><span class="val" style="color:var(--green)">54,381,056 (98%)</span></div>
+      <div class="stat-row"><span class="key">&#8627; Fresh</span><span class="val">863,468</span></div>
+      <div class="stat-row"><span class="key">Output Tokens</span><span class="val">94,219</span></div>
+      <div class="stat-row"><span class="key">&#8627; Reasoning</span><span class="val">28,200</span></div>
+      <div class="token-bar-wrap" style="margin-top:16px">
+        <div class="bar-label"><span>Input token composition</span></div>
+        <div class="token-bar">
+          <div class="seg" style="width:98%;background:#6366f1;opacity:0.8"></div>
+          <div class="seg" style="width:1%;background:#a78bfa"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:0.72rem;color:var(--muted)">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#6366f1;opacity:0.8;margin-right:4px"></span>Cached</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#a78bfa;margin-right:4px"></span>Fresh</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="cost-row">
+          <div class="dot" style="background:#a78bfa"></div>
+          <div class="cost-key">Fresh input (863,468_FMT tokens)</div>
+          <div class="cost-val" style="color:#a78bfa">$4.3173</div>
+        </div>
+        <div class="cost-row">
+          <div class="dot" style="background:#6366f1"></div>
+          <div class="cost-key">Cached input (54,381,056_FMT tokens)</div>
+          <div class="cost-val" style="color:#818cf8">$27.1905</div>
+        </div>
+        <div class="cost-row">
+          <div class="dot" style="background:#34d399"></div>
+          <div class="cost-key">Output (94,219_FMT tokens)</div>
+          <div class="cost-val" style="color:#34d399">$2.8266</div>
+        </div>
+        <div class="cost-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:12px">
+          <div class="dot" style="background:#f59e0b"></div>
+          <div class="cost-key" style="font-weight:700;color:var(--text)">Session Total</div>
+          <div class="cost-val" style="color:#f59e0b;font-size:1.1rem">$34.3344</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Guardian Session <span>Policy enforcer subagent</span></h3>
+      <div class="stat-row"><span class="key">Session ID</span><span class="val" style="font-family:monospace;font-size:0.72rem">019ee993-fe09-73a3-83c9-…</span></div>
+      <div class="stat-row"><span class="key">Parent Session</span><span class="val" style="font-family:monospace;font-size:0.72rem">019ee93f-adf2-7fa2-b540-…</span></div>
+      <div class="stat-row"><span class="key">Duration</span><span class="val">1h 0m 54s</span></div>
+      <div class="stat-row"><span class="key">Turns</span><span class="val">12</span></div>
+      <div class="stat-row"><span class="key">API Requests</span><span class="val">12</span></div>
+      <div class="stat-row"><span class="key">Total Input Tokens</span><span class="val">608,050</span></div>
+      <div class="stat-row"><span class="key">&#8627; Cached</span><span class="val" style="color:var(--green)">461,824 (75%)</span></div>
+      <div class="stat-row"><span class="key">&#8627; Fresh</span><span class="val">146,226</span></div>
+      <div class="stat-row"><span class="key">Output Tokens</span><span class="val">1,548</span></div>
+      <div class="stat-row"><span class="key">&#8627; Reasoning</span><span class="val">704</span></div>
+      <div class="token-bar-wrap" style="margin-top:16px">
+        <div class="bar-label"><span>Input token composition</span></div>
+        <div class="token-bar">
+          <div class="seg" style="width:75%;background:#22d3ee;opacity:0.8"></div>
+          <div class="seg" style="width:24%;background:#67e8f9"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:0.72rem;color:var(--muted)">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22d3ee;opacity:0.8;margin-right:4px"></span>Cached</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#67e8f9;margin-right:4px"></span>Fresh</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="cost-row">
+          <div class="dot" style="background:#67e8f9"></div>
+          <div class="cost-key">Fresh input (146,226_FMT tokens)</div>
+          <div class="cost-val" style="color:#67e8f9">$0.7311</div>
+        </div>
+        <div class="cost-row">
+          <div class="dot" style="background:#22d3ee"></div>
+          <div class="cost-key">Cached input (461,824_FMT tokens)</div>
+          <div class="cost-val" style="color:#06b6d4">$0.2309</div>
+        </div>
+        <div class="cost-row">
+          <div class="dot" style="background:#34d399"></div>
+          <div class="cost-key">Output (1,548_FMT tokens)</div>
+          <div class="cost-val" style="color:#34d399">$0.0464</div>
+        </div>
+        <div class="cost-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:12px">
+          <div class="dot" style="background:#f59e0b"></div>
+          <div class="cost-key" style="font-weight:700;color:var(--text)">Session Total</div>
+          <div class="cost-val" style="color:#f59e0b;font-size:1.1rem">$1.0085</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Token Usage Over Time — Main Session</div>
+  <div class="chart-panel">
+    <h3>Cumulative Tokens per API Request <span style="font-size:0.72rem;color:var(--muted)">339 requests · context window grows each call</span></h3>
+    <div class="chart-wrap" style="height:260px"><canvas id="cumulChart"></canvas></div>
+  </div>
+
+  <div class="two-col">
+    <div class="chart-panel">
+      <h3>API Requests per Turn — Main Session</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="turnReqChart"></canvas></div>
+    </div>
+    <div class="chart-panel">
+      <h3>Cost Breakdown — Combined</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="costChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Main Session — Turn Detail</div>
+  <div class="panel" style="margin-bottom:32px;padding:0;overflow:hidden">
+    <table class="turn-table">
+      <thead><tr>
+        <th>Turn</th><th>Requests</th><th>Input Tokens</th><th>Cached</th>
+        <th>Cache %</th><th>Output</th><th>Reasoning</th><th>Est. Cost</th>
+      </tr></thead>
+      <tbody><tr>
+          <td>Turn 1<br><span class="turn-id">019ee941-34d2-7b…</span></td>
+          <td>5</td>
+          <td>220,911</td>
+          <td>195,328</td>
+          <td><span class="eff-badge eff-high">88%</span></td>
+          <td>1,531</td>
+          <td>854</td>
+          <td>$0.2715</td>
+        </tr>
+<tr>
+          <td>Turn 2<br><span class="turn-id">019ee942-e8a7-70…</span></td>
+          <td>10</td>
+          <td>585,203</td>
+          <td>510,208</td>
+          <td><span class="eff-badge eff-high">87%</span></td>
+          <td>3,243</td>
+          <td>2,128</td>
+          <td>$0.7274</td>
+        </tr>
+<tr>
+          <td>Turn 3<br><span class="turn-id">019ee944-d3c6-7a…</span></td>
+          <td>6</td>
+          <td>331,471</td>
+          <td>323,328</td>
+          <td><span class="eff-badge eff-high">97%</span></td>
+          <td>1,185</td>
+          <td>443</td>
+          <td>$0.2379</td>
+        </tr>
+<tr>
+          <td>Turn 4<br><span class="turn-id">019ee991-581c-7b…</span></td>
+          <td>7</td>
+          <td>397,352</td>
+          <td>389,120</td>
+          <td><span class="eff-badge eff-high">97%</span></td>
+          <td>1,423</td>
+          <td>651</td>
+          <td>$0.2784</td>
+        </tr>
+<tr>
+          <td>Turn 5<br><span class="turn-id">019ee993-5280-71…</span></td>
+          <td>302</td>
+          <td>51,209,313</td>
+          <td>50,685,952</td>
+          <td><span class="eff-badge eff-high">98%</span></td>
+          <td>84,190</td>
+          <td>22,528</td>
+          <td>$30.4855</td>
+        </tr>
+<tr>
+          <td>Turn 6<br><span class="turn-id">019ee9cb-4fa8-7a…</span></td>
+          <td>9</td>
+          <td>2,500,274</td>
+          <td>2,277,120</td>
+          <td><span class="eff-badge eff-high">91%</span></td>
+          <td>2,647</td>
+          <td>1,596</td>
+          <td>$2.3337</td>
+        </tr>
+<tr class="total-row">
+          <td>TOTAL</td>
+          <td>339</td>
+          <td>55,244,524</td>
+          <td>54,381,056</td>
+          <td><span class="eff-badge eff-high">98%</span></td>
+          <td>94,219</td>
+          <td>28,200</td>
+          <td>$34.3344</td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Guardian Session — Turn Detail</div>
+  <div class="panel" style="margin-bottom:32px;padding:0;overflow:hidden">
+    <table class="turn-table">
+      <thead><tr>
+        <th>Turn</th><th>Requests</th><th>Input Tokens</th><th>Cached</th>
+        <th>Cache %</th><th>Output</th><th>Reasoning</th><th>Est. Cost</th>
+      </tr></thead>
+      <tbody><tr>
+          <td>Turn 1<br><span class="turn-id">019ee994-1246-7e…</span></td>
+          <td>1</td>
+          <td>18,987</td>
+          <td>7,040</td>
+          <td><span class="eff-badge eff-med">37%</span></td>
+          <td>275</td>
+          <td>203</td>
+          <td>$0.0715</td>
+        </tr>
+<tr>
+          <td>Turn 2<br><span class="turn-id">019ee994-676b-73…</span></td>
+          <td>1</td>
+          <td>21,191</td>
+          <td>18,816</td>
+          <td><span class="eff-badge eff-high">88%</span></td>
+          <td>223</td>
+          <td>145</td>
+          <td>$0.0280</td>
+        </tr>
+<tr>
+          <td>Turn 3<br><span class="turn-id">019ee994-b179-78…</span></td>
+          <td>1</td>
+          <td>22,380</td>
+          <td>20,864</td>
+          <td><span class="eff-badge eff-high">93%</span></td>
+          <td>95</td>
+          <td>25</td>
+          <td>$0.0209</td>
+        </tr>
+<tr>
+          <td>Turn 4<br><span class="turn-id">019ee999-704e-76…</span></td>
+          <td>1</td>
+          <td>31,940</td>
+          <td>21,888</td>
+          <td><span class="eff-badge eff-med">68%</span></td>
+          <td>107</td>
+          <td>40</td>
+          <td>$0.0644</td>
+        </tr>
+<tr>
+          <td>Turn 5<br><span class="turn-id">019ee9a9-27b8-7b…</span></td>
+          <td>1</td>
+          <td>43,347</td>
+          <td>31,616</td>
+          <td><span class="eff-badge eff-med">72%</span></td>
+          <td>104</td>
+          <td>35</td>
+          <td>$0.0776</td>
+        </tr>
+<tr>
+          <td>Turn 6<br><span class="turn-id">019ee9ae-36d5-70…</span></td>
+          <td>1</td>
+          <td>50,340</td>
+          <td>42,880</td>
+          <td><span class="eff-badge eff-high">85%</span></td>
+          <td>111</td>
+          <td>42</td>
+          <td>$0.0621</td>
+        </tr>
+<tr>
+          <td>Turn 7<br><span class="turn-id">019ee9b2-3eb3-7a…</span></td>
+          <td>1</td>
+          <td>56,722</td>
+          <td>50,048</td>
+          <td><span class="eff-badge eff-high">88%</span></td>
+          <td>77</td>
+          <td>10</td>
+          <td>$0.0607</td>
+        </tr>
+<tr>
+          <td>Turn 8<br><span class="turn-id">019ee9b2-5f12-74…</span></td>
+          <td>1</td>
+          <td>57,031</td>
+          <td>56,192</td>
+          <td><span class="eff-badge eff-high">98%</span></td>
+          <td>138</td>
+          <td>58</td>
+          <td>$0.0364</td>
+        </tr>
+<tr>
+          <td>Turn 9<br><span class="turn-id">019ee9b7-476d-7b…</span></td>
+          <td>1</td>
+          <td>64,924</td>
+          <td>56,704</td>
+          <td><span class="eff-badge eff-high">87%</span></td>
+          <td>97</td>
+          <td>29</td>
+          <td>$0.0724</td>
+        </tr>
+<tr>
+          <td>Turn 10<br><span class="turn-id">019ee9bc-34d3-73…</span></td>
+          <td>1</td>
+          <td>73,056</td>
+          <td>64,384</td>
+          <td><span class="eff-badge eff-high">88%</span></td>
+          <td>92</td>
+          <td>24</td>
+          <td>$0.0783</td>
+        </tr>
+<tr>
+          <td>Turn 11<br><span class="turn-id">019ee9be-e9ef-74…</span></td>
+          <td>1</td>
+          <td>78,463</td>
+          <td>72,576</td>
+          <td><span class="eff-badge eff-high">92%</span></td>
+          <td>93</td>
+          <td>25</td>
+          <td>$0.0685</td>
+        </tr>
+<tr>
+          <td>Turn 12<br><span class="turn-id">019ee9cb-cece-74…</span></td>
+          <td>1</td>
+          <td>89,669</td>
+          <td>18,816</td>
+          <td><span class="eff-badge eff-med">20%</span></td>
+          <td>136</td>
+          <td>68</td>
+          <td>$0.3678</td>
+        </tr>
+<tr class="total-row">
+          <td>TOTAL</td>
+          <td>12</td>
+          <td>608,050</td>
+          <td>461,824</td>
+          <td><span class="eff-badge eff-high">75%</span></td>
+          <td>1,548</td>
+          <td>704</td>
+          <td>$1.0085</td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    Pricing: GPT-5.5 API &mdash; $5.00/1M input &middot; $0.50/1M cached input &middot; $30.00/1M output (June 2026).
+    Codex Desktop runs on a subscription rate-limit model; these figures are the API-equivalent cost at standard per-token rates.
+    <em>cached_input_tokens</em> is a subset of <em>input_tokens</em>; fresh input = total input minus cached.
+  </div>
+</div>
+
+<footer>
+  Generated from Codex rollout logs &nbsp;|&nbsp; 2026-06-21 &nbsp;|&nbsp;
+  Pricing: <a href="https://openai.com/api/pricing/" target="_blank">openai.com/api/pricing</a>
+</footer>
+
+<script>
+const GRID = 'rgba(46,51,82,0.8)';
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = GRID;
+
+new Chart(document.getElementById('cumulChart'), {
+  type: 'line',
+  data: {
+    labels: ["08:17:12", "08:17:21", "08:17:25", "08:17:27", "08:17:41", "08:19:20", "08:19:23", "08:19:29", "08:19:32", "08:19:44", "08:19:51", "08:19:59", "08:20:07", "08:20:15", "08:20:20", "08:21:08", "08:21:12", "08:21:34", "08:21:46", "08:21:49", "09:44:37", "09:44:43", "09:44:49", "09:44:54", "09:44:58", "09:45:04", "09:45:14", "09:46:46", "09:46:56", "09:47:02", "09:47:07", "09:47:11", "09:47:18", "09:47:21", "09:47:40", "09:47:47", "09:47:52", "09:48:04", "09:48:10", "09:48:23", "09:48:30", "09:48:38", "09:48:44", "09:48:55", "09:48:58", "09:49:06", "09:49:11", "09:49:17", "09:49:22", "09:49:29", "09:49:32", "09:49:38", "09:49:46", "09:49:52", "09:49:56", "09:50:02", "09:50:10", "09:50:18", "09:50:25", "09:50:30", "09:50:36", "09:50:47", "09:50:55", "09:51:07", "09:51:13", "09:51:28", "09:51:36", "09:51:42", "09:51:48", "09:51:56", "09:52:10", "09:52:17", "09:52:28", "09:52:44", "09:52:58", "09:53:18", "09:53:33", "09:53:40", "09:53:50", "09:53:56", "09:54:18", "09:54:23", "09:54:29", "09:54:34", "09:54:42", "09:54:49", "09:55:00", "09:55:06", "09:55:13", "09:55:20", "09:55:28", "09:55:44", "09:55:50", "09:55:59", "09:56:10", "09:56:14", "09:56:19", "09:56:29", "09:56:46", "09:57:02", "09:57:11", "09:57:18", "09:57:25", "09:57:33", "09:57:39", "09:57:51", "09:57:57", "09:58:03", "09:58:09", "09:58:21", "09:58:27", "09:58:40", "09:58:43", "09:58:50", "09:59:01", "09:59:05", "09:59:14", "09:59:27", "09:59:37", "09:59:55", "09:59:59", "10:00:06", "10:00:20", "10:00:30", "10:00:48", "10:00:57", "10:01:14", "10:01:20", "10:01:26", "10:01:44", "10:01:52", "10:02:03", "10:02:11", "10:02:29", "10:02:33", "10:02:53", "10:02:59", "10:03:05", "10:03:19", "10:03:24", "10:03:34", "10:03:43", "10:03:49", "10:04:07", "10:04:17", "10:04:25", "10:04:32", "10:04:49", "10:04:51", "10:04:55", "10:05:11", "10:05:31", "10:05:40", "10:05:46", "10:06:01", "10:06:21", "10:06:28", "10:06:33", "10:06:48", "10:07:22", "10:07:38", "10:07:50", "10:07:59", "10:08:09", "10:08:14", "10:08:23", "10:08:31", "10:08:50", "10:08:59", "10:09:18", "10:09:26", "10:09:34", "10:09:43", "10:09:48", "10:09:56", "10:10:02", "10:10:07", "10:10:14", "10:10:23", "10:10:32", "10:10:43", "10:10:50", "10:11:00", "10:11:10", "10:11:18", "10:11:27", "10:11:32", "10:11:47", "10:11:57", "10:12:06", "10:12:14", "10:12:22", "10:12:31", "10:12:49", "10:13:00", "10:13:15", "10:13:23", "10:13:37", "10:13:44", "10:14:12", "10:14:17", "10:14:28", "10:14:38", "10:14:45", "10:14:55", "10:15:02", "10:15:09", "10:15:33", "10:15:41", "10:15:52", "10:16:19", "10:16:22", "10:16:31", "10:16:55", "10:16:59", "10:17:09", "10:17:40", "10:17:46", "10:17:54", "10:18:05", "10:18:14", "10:18:23", "10:18:31", "10:18:47", "10:18:55", "10:19:06", "10:19:13", "10:19:20", "10:19:28", "10:19:33", "10:19:45", "10:20:05", "10:20:14", "10:20:23", "10:20:40", "10:20:49", "10:21:00", "10:21:10", "10:21:24", "10:21:32", "10:21:50", "10:21:58", "10:22:08", "10:22:17", "10:22:33", "10:22:42", "10:22:53", "10:23:05", "10:23:19", "10:23:25", "10:23:34", "10:23:53", "10:24:08", "10:24:13", "10:24:19", "10:24:26", "10:24:39", "10:24:47", "10:25:00", "10:25:08", "10:25:24", "10:25:38", "10:25:47", "10:26:12", "10:26:21", "10:26:38", "10:26:44", "10:26:59", "10:27:09", "10:27:19", "10:27:27", "10:27:38", "10:27:47", "10:28:19", "10:28:28", "10:28:39", "10:29:02", "10:29:08", "10:29:14", "10:29:25", "10:29:36", "10:29:44", "10:29:58", "10:30:26", "10:30:59", "10:31:33", "10:31:46", "10:31:59", "10:32:07", "10:32:25", "10:32:32", "10:32:45", "10:32:58", "10:33:08", "10:33:21", "10:33:32", "10:33:49", "10:34:04", "10:34:33", "10:34:38", "10:34:58", "10:35:09", "10:35:36", "10:36:12", "10:36:19", "10:36:47", "10:36:56", "10:37:08", "10:37:18", "10:37:30", "10:37:42", "10:38:00", "10:38:16", "10:38:37", "10:38:42", "10:38:49", "10:39:05", "10:39:41", "10:39:55", "10:40:08", "10:40:17", "10:40:39", "10:40:49", "10:41:07", "10:41:51", "10:43:14", "10:43:32", "10:43:43", "10:43:50", "10:44:05", "10:48:13", "10:48:21", "10:48:35", "10:48:44", "10:48:52", "10:48:58", "10:49:04", "10:49:10", "10:49:36"],
+    datasets: [
+      { label: 'Cumulative Input Tokens', data: [40644, 81692, 123114, 167454, 220911, 275095, 330383, 385864, 441709, 499276, 557364, 619023, 681106, 743410, 806114, 868888, 934673, 1000674, 1068927, 1137585, 1137585, 1200358, 1266190, 1332245, 1398525, 1466615, 1534937, 1534937, 1597710, 1661036, 1724584, 1791027, 1857619, 1931376, 2005372, 2079801, 2157007, 2234408, 2312508, 2390847, 2472942, 2555337, 2638027, 2720943, 2804129, 2888647, 2973487, 3059307, 3145391, 3232298, 3319438, 3407234, 3495264, 3583583, 3672149, 3760963, 3849992, 3940754, 4033118, 4125740, 4218623, 4311749, 4405347, 4499297, 4593723, 4688370, 4783635, 4879171, 4975053, 5071179, 5167629, 5265312, 5364239, 5463585, 5563668, 5664217, 5765178, 5866591, 5968252, 6070366, 6172704, 6275852, 6380350, 6487211, 6595107, 6703335, 6811803, 6920652, 7030098, 7139794, 7250802, 7363234, 7476428, 7589862, 7704479, 7819461, 7935578, 8052676, 8170067, 8288524, 8408720, 8529307, 8650932, 8772839, 8896004, 9019429, 9143249, 9268031, 9393124, 9518457, 9644185, 9770147, 9896515, 10023430, 10150592, 10278116, 10406104, 10534450, 10663219, 10792371, 10922040, 11052329, 11182883, 11313857, 11445080, 11576843, 11708851, 11841337, 11974282, 12107481, 12241194, 12375159, 12509524, 12644125, 12779225, 12914888, 13051149, 13187661, 13324427, 13462856, 13602845, 13743100, 13884467, 14026660, 14169944, 14313489, 14457324, 14601385, 14745680, 14890124, 15034758, 15179632, 15324629, 15477733, 15631075, 15784557, 15938153, 16099837, 16261859, 16424025, 16586258, 16748608, 16919317, 17090521, 17262240, 17434996, 17608053, 17781403, 17956132, 18131216, 18307301, 18483656, 18660291, 18837530, 19015180, 19196884, 19379342, 19562437, 19746264, 19930347, 20114804, 20299568, 20484584, 20670746, 20857387, 21044273, 21231702, 21419500, 21607671, 21796149, 21985816, 22175795, 22366024, 22556584, 22747695, 22939023, 23130919, 23323045, 23515598, 23708383, 23902511, 24097009, 24291799, 24487158, 24682755, 24878839, 25075345, 25272073, 25469639, 25667642, 25865946, 26064986, 26264157, 26463595, 26663713, 26864041, 27064633, 27265870, 27467236, 27668837, 27870805, 28073082, 28276076, 28479324, 28682978, 28886864, 29091656, 29296687, 29502033, 29707613, 29913419, 30119443, 30326001, 30532846, 30740034, 30947440, 31155493, 31363900, 31573335, 31783306, 31993526, 32204328, 32415370, 32626995, 32838867, 33051144, 33263637, 33476710, 33689998, 33903751, 34118128, 34333196, 34548658, 34764818, 34981417, 35198202, 35415617, 35633429, 35851473, 36070247, 36289268, 36508751, 36728605, 36948698, 37169445, 37390435, 37612372, 37834820, 38057701, 38281151, 38505120, 38729345, 38954364, 39179642, 39406040, 39632567, 39859425, 40087144, 40315290, 40544118, 40774437, 41005487, 41236782, 41468360, 41700625, 41933127, 42166497, 42400093, 42634161, 42868450, 43103438, 43339006, 43574953, 43811354, 44048305, 44285732, 44523588, 44762063, 45001166, 45240786, 45480525, 45720714, 45961158, 46202513, 46444829, 46687328, 46930261, 47173419, 47416824, 47660807, 47905032, 48149508, 48394512, 48639980, 48885763, 49131692, 49377810, 49624054, 49870365, 50116807, 50371541, 50626451, 50882605, 51141742, 51403851, 51667857, 51936078, 52205173, 52474625, 52744250, 53014195, 53288398, 53564321, 53841928, 54120527, 54401206, 54682068, 54963159, 55244524], borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2, yAxisID: 'y' },
+      { label: 'Cumulative Output Tokens', data: [319, 650, 774, 846, 1531, 2611, 2719, 2969, 3061, 3497, 3824, 4205, 4341, 4717, 4774, 4991, 5142, 5533, 5914, 5959, 5959, 6224, 6385, 6545, 6725, 6892, 7382, 7382, 7736, 7894, 7995, 8101, 8248, 8338, 8743, 8787, 8958, 9148, 9363, 9566, 9842, 10055, 10257, 10449, 10535, 10833, 10990, 11230, 11360, 11569, 11656, 11866, 12073, 12296, 12462, 12653, 12873, 13076, 13252, 13431, 13650, 14010, 14338, 14732, 14929, 15413, 15660, 15916, 16136, 16436, 16883, 17038, 17371, 18084, 18441, 18829, 19132, 19356, 19674, 19874, 20523, 20700, 20956, 21103, 21350, 21566, 21923, 22037, 22263, 22421, 22717, 23321, 23537, 23813, 24085, 24213, 24353, 24622, 25012, 25422, 25731, 25862, 26120, 26317, 26553, 26860, 26932, 27155, 27371, 27683, 27893, 28215, 28297, 28520, 28799, 28868, 29148, 29483, 29842, 30274, 30364, 30605, 30940, 31165, 31619, 31840, 32234, 32298, 32479, 32903, 33131, 33443, 33655, 34074, 34167, 34652, 34830, 35060, 35353, 35487, 35729, 35947, 36109, 36549, 36786, 36988, 37190, 37396, 37435, 37527, 37739, 37778, 38015, 38105, 38217, 38256, 38474, 38632, 38748, 38787, 38829, 39318, 39471, 39652, 39793, 40009, 40278, 40761, 41092, 41528, 41713, 41969, 42130, 42265, 42438, 42568, 42719, 42891, 43123, 43473, 43599, 43827, 44069, 44389, 44610, 44804, 44935, 45223, 45440, 45621, 45839, 46065, 46372, 46839, 47032, 47510, 47716, 48054, 48262, 49429, 49520, 49788, 50018, 50232, 50400, 50508, 50706, 51456, 51710, 51987, 52695, 52734, 52977, 53629, 53668, 53908, 54525, 54564, 54775, 55059, 55344, 55552, 55782, 56077, 56285, 56535, 56750, 56978, 57188, 57331, 57525, 57962, 58225, 58544, 58734, 58773, 59103, 59346, 59726, 59951, 60373, 60589, 60797, 61020, 61340, 61532, 61719, 61910, 62301, 62392, 62580, 62893, 63147, 63244, 63353, 63494, 63805, 64013, 64234, 64457, 64840, 65123, 65338, 65811, 66030, 66502, 66602, 66941, 67073, 67243, 67475, 67720, 67955, 69047, 69086, 69393, 70174, 70294, 70429, 70699, 70948, 71115, 71374, 71881, 72094, 72800, 73002, 73385, 73582, 73994, 74104, 74306, 74591, 74688, 74876, 75135, 75730, 76334, 76823, 76862, 77224, 77455, 78292, 79225, 79264, 79670, 79709, 79871, 80115, 80280, 80446, 80666, 81048, 81335, 81374, 81485, 81583, 81622, 81669, 82091, 82202, 83169, 83393, 84054, 85927, 90118, 90830, 91132, 91281, 91572, 91900, 92070, 92241, 92420, 92585, 92728, 92857, 93008, 94219], borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.06)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2, yAxisID: 'y2' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() } }
+    },
+    scales: {
+      x: { ticks: { maxTicksLimit: 12, font: { size: 10 } }, grid: { color: GRID } },
+      y: { type: 'linear', position: 'left', title: { display: true, text: 'Input tokens', font: { size: 10 } }, grid: { color: GRID }, ticks: { font: { size: 10 }, callback: v => (v/1e6).toFixed(1)+'M' } },
+      y2: { type: 'linear', position: 'right', title: { display: true, text: 'Output tokens', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, callback: v => (v/1e3).toFixed(0)+'K' } }
+    }
+  }
+});
+
+new Chart(document.getElementById('turnReqChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Turn 1", "Turn 2", "Turn 3", "Turn 4", "Turn 5", "Turn 6"],
+    datasets: [{ label: 'API Requests', data: [5, 10, 6, 7, 302, 9], backgroundColor: ['#6366f1','#818cf8','#a5b4fc','#c7d2fe','#e0e7ff','#ede9fe'], borderRadius: 6 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: GRID }, ticks: { font: { size: 10 } } },
+      y: { grid: { color: GRID }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('costChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Main: Fresh Input', 'Main: Cached Input', 'Main: Output', 'Guardian Session'],
+    datasets: [{
+      data: [4.3173, 27.1905, 2.8266, 1.0085],
+      backgroundColor: ['#a78bfa', 'rgba(99,102,241,0.5)', '#34d399', '#22d3ee'],
+      borderColor: '#1a1d27', borderWidth: 3, hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '65%',
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, padding: 12 } },
+      tooltip: { callbacks: { label: ctx => ctx.label + ': $' + ctx.parsed.toFixed(4) } }
+    }
+  }
+});
+</script>
+</body>
+</html>

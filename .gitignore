@@ -1,0 +1,7 @@
+# Raw Codex rollout logs — contain agent context windows with embedded API keys,
+# file paths, and email addresses. Never commit these.
+runs/**/rollout-*.jsonl
+
+# Python cache
+__pycache__/
+*.pyc
