@@ -8,4 +8,4 @@ Start every testing or documentation task by reading `AGENTS.md`.
 
 ## Propagating Patterns
 
-When a new generalizable pattern is discovered and documented in `AGENTS.md`, write the product-agnostic version into `C:\Users\jitan\Development\PromptMate World\agent-qa-harness\PATTERNS.md` as part of the same task.
+When a new generalizable pattern is discovered and documented in `AGENTS.md`, write the product-agnostic version into `PATTERNS.md` in the sibling `agent-qa-harness` repository as part of the same task.

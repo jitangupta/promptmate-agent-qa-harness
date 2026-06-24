@@ -34,13 +34,17 @@ Supported PromptMate surfaces:
 
 ## Repository Structure
 
-| File | Purpose |
+| File / Directory | Purpose |
 |---|---|
 | `AGENTS.md` | Shared runbook for Codex, Claude Code, and other agentic systems |
 | `CLAUDE.md` | Claude Code entry point that delegates to `AGENTS.md` |
 | `promptmate_test_cases.jsonl` | Master test specification, one JSON object per line |
-| `promptmate_test_results_YYYY-MM-DD.jsonl` | Raw result log for a dated run |
-| `promptmate_test_report_YYYY-MM-DD.md` | Human-readable report for a dated run |
+| `runs/YYYY-MM-DD/test_results.jsonl` | Raw result log for a dated run |
+| `runs/YYYY-MM-DD/test_report.md` | Human-readable report for a dated run |
+| `runs/YYYY-MM-DD/dashboard.html` | Token and cost dashboard (when a Codex rollout log is present) |
+| `fixtures/` | Extension storage state fixtures for state-dependent tests |
+| `eval.py` | Consistency eval script — measures cross-run verdict reliability |
+| `CASE_STUDY.md` | In-depth write-up of harness architecture, the chrome.storage.local gap, and token economics |
 | `DEVELOPMENT_HANDOFF.md` | Bugs, usability issues, and enhancement ideas found during testing |
 | `RELEASE_HANDOFF_0.8.0.md` | Release-specific handoff for the 0.8.0 live release decision and expanded QA scope |
 
@@ -88,10 +92,27 @@ Common prompts:
 Start the ChatGPT test.
 Start the full test.
 Run TC-031 through TC-041 on chatgpt.com.
+Run the smoke chunk on ChatGPT.
 Review the latest report and summarize failures.
 ```
 
+The suite is split into named chunks for targeted or partial runs:
+
+| Chunk | Test IDs | Focus |
+|---|---|---|
+| `smoke` | TC-001 – TC-020 | Extension presence, panel UI, search, tone/format |
+| `compose` | TC-021 – TC-060 | Prompt library, injection, pin, CRUD, version history, trash, sync |
+| `personalize` | TC-061 – TC-078 | Edge cases, variables, groups |
+| `context` | TC-079 – TC-088 | User context, prompt preview, rating prompt |
+
 During testing, discovered product issues should go into `DEVELOPMENT_HANDOFF.md`, not only into the dated test report. The handoff file is meant to be directly usable by Codex, Claude Code, or a human developer.
+
+To measure cross-run verdict consistency after accumulating multiple runs:
+
+```bash
+python eval.py          # human-readable report
+python eval.py --json   # machine-readable output
+```
 
 ## Testing State-Dependent UI
 
