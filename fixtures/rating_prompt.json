@@ -9,7 +9,7 @@
         "action": null,
         "dismissedAt": null,
         "firstSeenAt": "2026-06-11T17:40:26.356Z",
-        "version": "0.7.1"
+        "version": "0.8.0"
       }
     },
     "eligible_unseen": {
@@ -18,7 +18,7 @@
         "action": null,
         "dismissedAt": null,
         "firstSeenAt": null,
-        "version": "0.7.1"
+        "version": "0.8.0"
       }
     },
     "dismissed": {
@@ -27,7 +27,7 @@
         "action": "dismissed",
         "dismissedAt": "2026-06-11T17:45:00.000Z",
         "firstSeenAt": "2026-06-11T17:40:26.356Z",
-        "version": "0.7.1"
+        "version": "0.8.0"
       }
     },
     "rated": {
@@ -36,18 +36,18 @@
         "action": "rated",
         "dismissedAt": null,
         "firstSeenAt": "2026-06-11T17:40:26.356Z",
-        "version": "0.7.1"
+        "version": "0.8.0"
       }
     }
   },
   "how_to_inject": {
     "method_url_params": {
-      "_description": "Preferred method once the pm_test_key/pm_test_value hook is implemented in the PromptMate content script (see DEVELOPMENT_HANDOFF.md entry 2026-06-19). The content script reads these params on load, writes the value into chrome.storage.local, and reloads once. No DevTools or console access required — any agent that can navigate a URL can use this.",
-      "_status": "blocked pending product implementation",
+      "_description": "The pm_test_key/pm_test_value hook is implemented in scripts/test-seam.js (build-gated; dev builds only). The content script reads these params on load, validates the key against ALLOWED_TEST_KEYS, writes the value into chrome.storage.local, strips the params, and reloads once. No DevTools or console access required — any agent that can navigate a URL can use this.",
+      "_status": "implemented",
       "url_template": "https://<platform>?pm_test_key=promptmate.ratingPrompt&pm_test_value=<url_encoded_state_value>",
       "examples": {
-        "seen_no_action_chatgpt": "https://chatgpt.com?pm_test_key=promptmate.ratingPrompt&pm_test_value={\"action\":null,\"dismissedAt\":null,\"firstSeenAt\":\"2026-06-11T17:40:26.356Z\",\"version\":\"0.7.1\"}",
-        "dismissed_claude": "https://claude.ai/new?pm_test_key=promptmate.ratingPrompt&pm_test_value={\"action\":\"dismissed\",\"dismissedAt\":\"2026-06-11T17:45:00.000Z\",\"firstSeenAt\":\"2026-06-11T17:40:26.356Z\",\"version\":\"0.7.1\"}"
+        "seen_no_action_chatgpt": "https://chatgpt.com?pm_test_key=promptmate.ratingPrompt&pm_test_value={\"action\":null,\"dismissedAt\":null,\"firstSeenAt\":\"2026-06-11T17:40:26.356Z\",\"version\":\"0.8.0\"}",
+        "dismissed_claude": "https://claude.ai/new?pm_test_key=promptmate.ratingPrompt&pm_test_value={\"action\":\"dismissed\",\"dismissedAt\":\"2026-06-11T17:45:00.000Z\",\"firstSeenAt\":\"2026-06-11T17:40:26.356Z\",\"version\":\"0.8.0\"}"
       },
       "reusable_for_other_keys": "The same pm_test_key / pm_test_value params work for any chrome.storage.local key, not just promptmate.ratingPrompt. Use the same pattern to seed onboarding state, feature flags, or any other storage-backed banner."
     },
